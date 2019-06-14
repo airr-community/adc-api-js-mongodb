@@ -48,7 +48,7 @@ var swaggerConfig = {
 
 // Load swagger API
 //console.log(config.appRoot);
-var swaggerFile = path.resolve(swaggerConfig.appRoot, 'api/swagger/adc_api.yaml');
+var swaggerFile = path.resolve(swaggerConfig.appRoot, 'api/swagger/adc-api.yaml');
 console.log('Using swapper API file: ' + swaggerFile);
 swaggerConfig.swagger = yaml.safeLoad(fs.readFileSync(swaggerFile, 'utf8'));
 
