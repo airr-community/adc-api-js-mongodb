@@ -202,7 +202,7 @@ function constructQueryOperation(filter) {
 
     case 'exclude':
 	if ((content['field'] != undefined) && (content_value != undefined) && (content['value'] instanceof Array)) {
-	    return '{"' + content['field'] + '": { "$in":' + content_value + '}}';
+	    return '{"' + content['field'] + '": { "$nin":' + content_value + '}}';
 	}
 	return null;
 
