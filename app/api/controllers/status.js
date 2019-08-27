@@ -32,6 +32,14 @@ var util = require('util');
 
 // Server environment config
 var config = require('../../config/config');
+var mongoSettings = require('../../config/mongoSettings');
+
+var MongoClient = require('mongodb').MongoClient;
+var assert = require('assert');
+
+var url = 'mongodb://'
+    + mongoSettings.username + ':' + mongoSettings.userSecret + '@'
+    + mongoSettings.hostname + ':27017/admin';
 
 /*
  Once you 'require' a module you can reference the things that it exports.  These are defined in module.exports.
@@ -48,11 +56,23 @@ module.exports = {
 };
 
 function getStatus(req, res) {
-    //console.log('getStatus');
-    res.json({"result":"success"});
+    // check connection to database
+    MongoClient.connect(url, function(err, db) {
+	if (err) {
+	    res.status(500).json({"message":"Could not connect to database."});
+	} else {
+	    res.json({"result":"success"});
+	}
+    });
 }
 
 function getInfo(req, res) {
-    //console.log('getStatus');
-    res.json({ name: config.info.name, description: config.info.description, version: config.info.version, customization: config.custom_file});
+    // check connection to database
+    MongoClient.connect(url, function(err, db) {
+	if (err) {
+	    res.status(500).json({"message":"Could not connect to database."});
+	} else {
+	    res.json({ name: config.info.name, description: config.info.description, version: config.info.version, customization: config.custom_file});
+	}
+    });
 }
