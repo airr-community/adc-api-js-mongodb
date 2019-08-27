@@ -248,6 +248,18 @@ function constructQueryOperation(filter) {
 function getRearrangement(req, res) {
     console.log('getRearrangement: ' + req.swagger.params['rearrangement_id'].value);
 
+    var result = {};
+    var result_message = "Unknown error";
+    var results = [];
+
+    // construct info object for response
+    var info = { };
+    var schema = global.airr['Info'];
+    info['title'] = 'AIRR Data Commons API reference implementation'
+    info['description'] = 'API response for rearrangement query'
+    info['version'] = schema.version;
+    info['contact'] = schema.contact;
+
     MongoClient.connect(url, function(err, db) {
 	assert.equal(null, err);
 	console.log("Connected successfully to mongo");
@@ -260,11 +272,15 @@ function getRearrangement(req, res) {
 		db.close();
 		if (record) {
 		    if (record['_id']) delete record['_id'];
-		    res.json(record);
+		    res.json({"Info":info,"Rearrangement":[record]});
 		} else
-		    res.status(404).json({});
-	    });
-		
+		    res.json({"Info":info,"Rearrangement":[]});
+	    })
+	    .catch(function() {
+		db.close();
+		res.status(500).json({"message":result_message});
+		return;
+	    });	
     });
 }
 
@@ -279,7 +295,6 @@ function queryRearrangements(req, res) {
 
     var results = [];
     var result = {};
-    var result_flag = false;
     var result_message = "Unknown error";
 
     var bodyData = req.swagger.params['data'].value;
@@ -362,7 +377,7 @@ function queryRearrangements(req, res) {
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
-    info['title'] = 'AIRR Data Commons API'
+    info['title'] = 'AIRR Data Commons API reference implementation'
     info['description'] = 'API response for rearrangement query'
     info['version'] = schema.version;
     info['contact'] = schema.contact;

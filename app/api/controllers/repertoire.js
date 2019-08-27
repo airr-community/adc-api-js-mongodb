@@ -248,6 +248,18 @@ function constructQueryOperation(filter) {
 function getRepertoire(req, res) {
     console.log('getRepertoire: ' + req.swagger.params['repertoire_id'].value);
 
+    var result = {};
+    var result_message = "Unknown error";
+    var results = [];
+
+    // construct info object for response
+    var info = { };
+    var schema = global.airr['Info'];
+    info['title'] = 'AIRR Data Commons API reference implementation'
+    info['description'] = 'API response for repertoire query'
+    info['version'] = schema.version;
+    info['contact'] = schema.contact;
+
     MongoClient.connect(url, function(err, db) {
 	assert.equal(null, err);
 	console.log("Connected successfully to mongo");
@@ -260,11 +272,15 @@ function getRepertoire(req, res) {
 		db.close();
 		if (record) {
 		    if (record['_id']) delete record['_id'];
-		    res.json(record);
+		    res.json({"Info":info,"Repertoire":[record]});
 		} else
-		    res.status(404).json({});
+		    res.json({"Info":info,"Repertoire":[]});
+	    })
+	    .catch(function() {
+		db.close();
+		res.status(500).json({"message":result_message});
+		return;
 	    });
-		
     });
 }
 
@@ -352,7 +368,7 @@ function queryRepertoires(req, res) {
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
-    info['title'] = 'AIRR Data Commons API'
+    info['title'] = 'AIRR Data Commons API reference implementation'
     info['description'] = 'API response for repertoire query'
     info['version'] = schema.version;
     info['contact'] = schema.contact;
