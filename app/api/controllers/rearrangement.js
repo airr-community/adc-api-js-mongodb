@@ -78,6 +78,7 @@ function constructQueryOperation(filter) {
 
     // determine type from schema, default is string
     var content_type = 'string';
+    var content_properties = null;
     if (content['field'] != undefined) {
 	var schema = global.airr['Rearrangement'];
 	var props = schema;
@@ -108,12 +109,29 @@ function constructQueryOperation(filter) {
 	}
 
 	if (props != undefined) {
-	    if (props['type'] != undefined) content_type = props['type'];
+	    if (props['type'] != undefined) {
+		content_type = props['type'];
+		content_properties = props;
+	    }
 	} else {
 	    console.error(content['field'] + ' is not found in AIRR schema.');
 	}
     }
     console.log('type: ' + content_type);
+
+    // Check if query is required. By default, the ADC API will not allow
+    // queries on the rearrangement endpoint for optional fields.
+    if (content_properties != undefined) {
+	if (content_properties['x-airr'] != undefined) {
+	    if (content_properties['x-airr']['adc-api-optional'] != undefined) {
+		if (content_properties['x-airr']['adc-api-optional']) {
+		    // optional field, reject
+		    console.error(content['field'] + ' is an optional query field.');
+		    return null;
+		}
+	    }
+	}
+    }
 
     var content_value = undefined;
     if (content['value'] != undefined) {
