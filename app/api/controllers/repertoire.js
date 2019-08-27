@@ -183,7 +183,7 @@ function constructQueryOperation(filter) {
 	return null;
 
     case 'is': // is missing
-	if (content['field'] != undefined) {
+    if (content['field'] != undefined) {
 	    return '{"' + content['field'] + '": { "$exists": false } }';
 	}
 	return null;
@@ -292,7 +292,7 @@ function queryRepertoires(req, res) {
 	console.log('fields: ', fields);
 	if (! (fields instanceof Array)) {
 	    result_message = "fields parameter is not an array.";
-	    res.json({"success":false,"message":result_message});
+	    res.status(400).json({"message":result_message});
 	    return;
 	}
 	for (var i = 0; i < fields.length; ++i) {
@@ -323,7 +323,7 @@ function queryRepertoires(req, res) {
 
 	if (!query) {
 	    result_message = "Could not construct valid query.";
-	    res.json({"success":false,"message":result_message});
+	    res.status(400).json({"message":result_message});
 	    return;
 	}
 
@@ -332,7 +332,7 @@ function queryRepertoires(req, res) {
 	    query = JSON.parse(query);
 	} catch (e) {
 	    result_message = "Could not construct valid query: " + e;
-	    res.json({"success":false,"message":result_message});
+	    res.status(400).json({"message":result_message});
 	    return;
 	}
     }
@@ -377,7 +377,7 @@ function queryRepertoires(req, res) {
 		})
 		.catch(function() {
 		    db.close();
-		    res.json({"success":result_flag,"message":result_message});
+		    res.status(500).json({"message":result_message});
 		    return;
 		});
 	} else {
@@ -393,7 +393,7 @@ function queryRepertoires(req, res) {
 		})
 		.catch(function() {
 		    db.close();
-		    res.json({"success":result_flag,"message":result_message});
+		    res.status(500).json({"message":result_message});
 		    return;
 		});
 	}

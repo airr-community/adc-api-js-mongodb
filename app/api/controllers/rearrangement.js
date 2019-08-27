@@ -291,7 +291,7 @@ function queryRearrangements(req, res) {
 	console.log('fields: ', fields);
 	if (! (fields instanceof Array)) {
 	    result_message = "fields parameter is not an array.";
-	    res.status(400).json({"success":false,"message":result_message});
+	    res.status(400).json({"message":result_message});
 	    return;
 	}
 	for (var i = 0; i < fields.length; ++i) {
@@ -304,10 +304,11 @@ function queryRearrangements(req, res) {
     // format parameter
     var format = 'json';
     if (bodyData['format'] != undefined)
-	format = bodyData['format'];
+    format = bodyData['format'];
     if ((format != 'json') && (format != 'airr')) {
-	res.status(400).end();
-	return;
+        result_message = "Unknown format.";
+        res.status(400).json({"message":result_message});
+        return;
     }
 
     // from parameter
@@ -331,25 +332,25 @@ function queryRearrangements(req, res) {
 
 	if (!query) {
 	    result_message = "Could not construct valid query.";
-	    res.status(400).json({"success":false,"message":result_message});
+	    res.status(400).json({"message":result_message});
 	    return;
 	}
 
-	// turn query string into JSON for mongo
-	try {
-	    query = JSON.parse(query);
-	} catch (e) {
-	    result_message = "Could not construct valid query: " + e;
-	    res.status(400).json({"success":false,"message":result_message});
-	    return;
-	}
+    // turn query string into JSON for mongo
+    try {
+        query = JSON.parse(query);
+    } catch (e) {
+        result_message = "Could not construct valid query: " + e;
+        res.status(400).json({"message":result_message});
+        return;
+    }
     }
 
     // facets parameter
     var facets = bodyData['facets'];
     var agg = [];
     if (facets != undefined) {
-	if (query) agg.push({ $match: query });
+        if (query) agg.push({ $match: query });
 	agg.push(
 		{ $group: {
 		    _id: '$' + facets,
@@ -393,7 +394,7 @@ function queryRearrangements(req, res) {
 		})
 		.catch(function() {
 		    db.close();
-		    res.json({"success":result_flag,"message":result_message});
+		    res.status(500).json({"message":result_message});
 		    return;
 		});
 	} else {
