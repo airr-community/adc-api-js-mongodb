@@ -3,6 +3,10 @@
 JavaScript REST API implementation for MongoDB database repository
 using swagger middleware.
 
+## Bug Reporting
+
+File issues at the top-level [ADC API github repository](https://github.com/airr-community/adc-api/).
+
 ## Configuration setup
 
 Create and update environment file with appropriate settings. These
