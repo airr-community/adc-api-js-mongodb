@@ -1,5 +1,5 @@
 # Base Image
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 LABEL maintainer="Scott Christley <scott.christley@utsouthwestern.edu>"
 
@@ -9,7 +9,19 @@ RUN DEBIAN_FRONTEND='noninteractive' apt-get update && DEBIAN_FRONTEND='noninter
     wget \
     xz-utils \
     default-jre \
-    git
+    git \
+    python3 \
+    python3-pip \
+    python3-sphinx \
+    python3-scipy \
+    libyaml-dev \
+    unzip
+
+RUN pip3 install \
+    pandas \
+    biopython \
+    airr \
+    python-dotenv
 
 # node
 RUN wget https://nodejs.org/dist/v8.10.0/node-v8.10.0-linux-x64.tar.xz
