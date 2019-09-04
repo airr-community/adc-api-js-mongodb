@@ -72,7 +72,13 @@ function getInfo(req, res) {
 	if (err) {
 	    res.status(500).json({"message":"Could not connect to database."});
 	} else {
-	    res.json({ name: config.info.name, description: config.info.description, version: config.info.version, customization: config.custom_file});
+	    res.json({ name: config.info.name,
+		       description: config.info.description,
+		       version: config.info.version,
+		       airr_schema_version: global.airr['Info']['version'],
+		       max_size: config.max_size,
+		       max_query_size: config.max_query_size,
+		       contact: global.airr['Info']['contact']});
 	}
     });
 }

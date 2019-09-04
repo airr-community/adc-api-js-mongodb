@@ -255,7 +255,7 @@ function getRepertoire(req, res) {
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
-    info['title'] = 'AIRR Data Commons API reference implementation'
+    info['title'] = config.info.description;
     info['description'] = 'API response for repertoire query'
     info['version'] = schema.version;
     info['contact'] = schema.contact;
@@ -368,7 +368,7 @@ function queryRepertoires(req, res) {
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
-    info['title'] = 'AIRR Data Commons API reference implementation'
+    info['title'] = config.info.description;
     info['description'] = 'API response for repertoire query'
     info['version'] = schema.version;
     info['contact'] = schema.contact;

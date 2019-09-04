@@ -273,7 +273,7 @@ function getRearrangement(req, res) {
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
-    info['title'] = 'AIRR Data Commons API reference implementation'
+    info['title'] = config.info.description;
     info['description'] = 'API response for rearrangement query'
     info['version'] = schema.version;
     info['contact'] = schema.contact;
@@ -350,9 +350,14 @@ function queryRearrangements(req, res) {
 	from = bodyData['from'];
 
     // size parameter
-    var size = 0;
+    var size = config.max_size;
     if (bodyData['size'] != undefined)
 	size = bodyData['size'];
+    if (size > config.max_size) {
+	result_message = "Size (" + size + ") exceeds maximum size (" + config.max_size + ").";
+	res.status(400).json({"message":result_message});
+	return;
+    }
 
     // construct query string
     var filter = {};
@@ -395,7 +400,7 @@ function queryRearrangements(req, res) {
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
-    info['title'] = 'AIRR Data Commons API reference implementation'
+    info['title'] = config.info.description;
     info['description'] = 'API response for rearrangement query'
     info['version'] = schema.version;
     info['contact'] = schema.contact;
@@ -440,7 +445,6 @@ function queryRearrangements(req, res) {
 		});
 	} else {
 	    // format parameter
-	    var headers = [];
 	    if (format == 'json') {
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Content-Disposition', 'attachment;filename="data.json"');
@@ -455,7 +459,25 @@ function queryRearrangements(req, res) {
 		    res.status(500).end();
 		    return;
 		}
-		for (var p in schema['properties']) headers.push(p);
+
+		var headers = [];
+		// if fields parameter specified then return only those fields
+		if (bodyData['fields'] != undefined) {
+		    // schema fields
+		    for (var p in schema['properties']) {
+			if (projection[p]) headers.push(p);
+		    }
+		    // add custom fields on end
+		    for (var p in projection) {
+			if (projection[p]) {
+		            if (schema['properties'][p]) continue;
+		            else headers.push(p);
+			}
+		    }
+		} else {
+		    // otherwise return the schema fields
+		    for (var p in schema['properties']) headers.push(p);
+		}
 
 		res.write(headers.join('\t'));
 		res.write('\n');
