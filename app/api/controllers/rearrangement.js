@@ -421,8 +421,16 @@ function queryRearrangements(req, res) {
 		    //console.log(records);
 		    console.log('Retrieve ' + records.length + ' records.');
 		    
+		    for (var i in records) {
+			var entry = records[i];
+			var new_entry = {}
+			new_entry[facets] = entry['_id'];
+			new_entry['count'] = entry['count'];
+			results.push(new_entry);
+		    }
+
 		    db.close();
-		    res.json({"Info":info,"Rearrangement":records});
+		    res.json({"Info":info,"Facet":results});
 		    return;
 		})
 		.catch(function() {
