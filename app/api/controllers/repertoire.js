@@ -148,31 +148,31 @@ function constructQueryOperation(filter) {
 
     case '!=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$ne":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$ne":' + content_value + '}}';
 	}
 	return null;
 
     case '<':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$lt":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$lt":' + content_value + '}}';
 	}
 	return null;
 
     case '<=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$lte":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$lte":' + content_value + '}}';
 	}
 	return null;
 
     case '>':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$gt":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$gt":' + content_value + '}}';
 	}
 	return null;
 
     case '>=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$gte":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$gte":' + content_value + '}}';
 	}
 	return null;
 
@@ -322,11 +322,21 @@ function queryRepertoires(req, res) {
     var from = 0;
     if (bodyData['from'] != undefined)
 	from = bodyData['from'];
+    if (from < 0) {
+	result_message = "Invalid from parameter.";
+	res.status(400).json({"message":result_message});
+	return;
+    }
 
     // size parameter
     var size = 0;
     if (bodyData['size'] != undefined)
 	size = bodyData['size'];
+    if (size < 0) {
+	result_message = "Invalid size parameter.";
+	res.status(400).json({"message":result_message});
+	return;
+    }
 
     // construct query string
     var filter = {};
@@ -334,17 +344,17 @@ function queryRepertoires(req, res) {
     if (bodyData['filters'] != undefined) {
 	filter = bodyData['filters'];
 	console.log(filter);
-	query = constructQueryOperation(filter);
-	console.log(query);
-
-	if (!query) {
-	    result_message = "Could not construct valid query.";
-	    res.status(400).json({"message":result_message});
-	    return;
-	}
-
-	// turn query string into JSON for mongo
 	try {
+	    query = constructQueryOperation(filter);
+	    console.log(query);
+
+	    if (!query) {
+		result_message = "Could not construct valid query.";
+		res.status(400).json({"message":result_message});
+		return;
+	    }
+
+	    // turn query string into JSON for mongo
 	    query = JSON.parse(query);
 	} catch (e) {
 	    result_message = "Could not construct valid query: " + e;
