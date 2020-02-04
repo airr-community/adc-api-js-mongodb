@@ -318,6 +318,9 @@ function queryRepertoires(req, res) {
     }
     projection['_id'] = 0;
 
+    // format parameter
+    // only supports json
+
     // from parameter
     var from = 0;
     if (bodyData['from'] != undefined)

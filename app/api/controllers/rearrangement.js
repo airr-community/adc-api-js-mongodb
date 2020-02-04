@@ -338,7 +338,7 @@ function queryRearrangements(req, res) {
     var format = 'json';
     if (bodyData['format'] != undefined)
     format = bodyData['format'];
-    if ((format != 'json') && (format != 'airr')) {
+    if ((format != 'json') && (format != 'tsv')) {
         result_message = "Unknown format.";
         res.status(400).json({"message":result_message});
         return;
@@ -448,7 +448,7 @@ function queryRearrangements(req, res) {
 	    if (format == 'json') {
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Content-Disposition', 'attachment;filename="data.json"');
-	    } else if (format == 'airr') {
+	    } else if (format == 'tsv') {
 		res.setHeader('Content-Type', 'text/tsv');
 		res.setHeader('Content-Disposition', 'attachment;filename="data.tsv"');
 
@@ -508,13 +508,13 @@ function queryRearrangements(req, res) {
 
 		    if (!first) {
 			if (format == 'json') res.write(',\n');
-			if (format == 'airr') res.write('\n');
+			if (format == 'tsv') res.write('\n');
 		    }  else {
 			first = false;
 		    }
 
 		    if (format == 'json') res.write(JSON.stringify(entry));
-		    if (format == 'airr') {
+		    if (format == 'tsv') {
 			var vals = [];
 			for (var i = 0; i < headers.length; ++i) {
 			    var p = headers[i];
@@ -527,7 +527,7 @@ function queryRearrangements(req, res) {
 	    }, function(err) {
 	        db.close();
 	        if (format == 'json') res.write(']}\n');
-	        if (format == 'airr') res.write('\n');
+	        if (format == 'tsv') res.write('\n');
 	        res.end();
 	    });
 	}
