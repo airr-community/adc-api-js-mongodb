@@ -20,7 +20,6 @@ RUN DEBIAN_FRONTEND='noninteractive' apt-get update && DEBIAN_FRONTEND='noninter
 RUN pip3 install \
     pandas \
     biopython \
-    airr \
     python-dotenv
 
 # node
@@ -45,6 +44,9 @@ RUN cd /adc-api-js-mongodb/app && npm install https://github.com/apigee-127/sway
 
 # Copy project source
 COPY . /adc-api-js-mongodb
+
+# Install local AIRR standards
+RUN cd /adc-api-js-mongodb/airr-standards/lang/python && python3 setup.py install
 
 # Copy AIRR spec
 RUN cp /adc-api-js-mongodb/airr-standards/specs/adc-api.yaml /adc-api-js-mongodb/app/api/swagger/adc-api.yaml
