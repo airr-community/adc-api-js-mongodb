@@ -77,8 +77,8 @@ function constructQueryOperation(filter) {
     // TODO: mechanism to return error information
     // TODO: validate queryable field names?
 
-    // determine type from schema, default is string
-    var content_type = 'string';
+    // determine type from schema
+    var content_type = null;
     var content_properties = null;
     if (content['field'] != undefined) {
 	var schema = global.airr['Rearrangement'];
@@ -118,6 +118,9 @@ function constructQueryOperation(filter) {
 	    console.error(content['field'] + ' is not found in AIRR schema.');
 	}
     }
+    // if not in schema then maybe its a custom field
+    // so use the same type as the value.
+    if (!content_type) content_type = typeof content['value'];
     console.log('type: ' + content_type);
 
     // Check if query is required. By default, the ADC API will not allow
