@@ -33,6 +33,7 @@ var util = require('util');
 // Server environment config
 var config = require('../../config/config');
 var mongoSettings = require('../../config/mongoSettings');
+var airr = require('../helpers/airr-schema');
 
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
@@ -317,6 +318,12 @@ function queryRearrangements(req, res) {
 
     var bodyData = req.swagger.params['data'].value;
 
+    // AIRR required fields
+    var all_required = [];
+    if (bodyData['include_required']) {
+	airr.collectRequiredFields(global.airr['Rearrangement'], all_required, null);
+    }
+
     // field projection
     var projection = {};
     if (bodyData['fields'] != undefined) {
@@ -330,6 +337,14 @@ function queryRearrangements(req, res) {
 	for (var i = 0; i < fields.length; ++i) {
 	    if (fields[i] == '_id') continue;
 	    projection[fields[i]] = 1;
+	}
+
+	// add AIRR required fields to projection
+	// NOTE: projection will not add a field if it is not already in the document
+	// so below after the data has been retrieved, missing fields need to be
+	// added with null values.
+	if (all_required.length > 0) {
+	    for (var r in all_required) projection[all_required[r]] = 1;
 	}
     }
     projection['_id'] = 0;
@@ -462,6 +477,8 @@ function queryRearrangements(req, res) {
 
 		var headers = [];
 		// if fields parameter specified then return only those fields
+		// if include_required parameter is true, the required fields were added
+		// to the projection and thus added to the headers here.
 		if (bodyData['fields'] != undefined) {
 		    // schema fields
 		    for (var p in schema['properties']) {
@@ -506,6 +523,11 @@ function queryRearrangements(req, res) {
 			//else if (custom_file) custom_file.dataCleanForQuerySequencesData(p, entry, req, res);
 		    }
 
+		    // add any missing required fields
+		    if (all_required.length > 0) {
+			airr.addRequiredFields(entry, all_required, global.airr['Rearrangement']);
+		    }
+
 		    if (!first) {
 			if (format == 'json') res.write(',\n');
 			if (format == 'tsv') res.write('\n');
@@ -518,6 +540,7 @@ function queryRearrangements(req, res) {
 			var vals = [];
 			for (var i = 0; i < headers.length; ++i) {
 			    var p = headers[i];
+			    console.log(p, entry[p]);
 			    if (!entry[p]) vals.push('');
 			    else vals.push(entry[p]);
 			}

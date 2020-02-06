@@ -33,6 +33,7 @@ var util = require('util');
 // Server environment config
 var config = require('../../config/config');
 var mongoSettings = require('../../config/mongoSettings');
+var airr = require('../helpers/airr-schema');
 
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
@@ -301,6 +302,12 @@ function queryRepertoires(req, res) {
 
     var bodyData = req.swagger.params['data'].value;
 
+    // AIRR required fields
+    var all_required = [];
+    if (bodyData['include_required']) {
+	airr.collectRequiredFields(global.airr['Repertoire'], all_required, null);
+    }
+
     // field projection
     var projection = {};
     if (bodyData['fields'] != undefined) {
@@ -314,6 +321,14 @@ function queryRepertoires(req, res) {
 	for (var i = 0; i < fields.length; ++i) {
 	    if (fields[i] == '_id') continue;
 	    projection[fields[i]] = 1;
+	}
+
+	// add AIRR required fields to projection
+	// NOTE: projection will not add a field if it is not already in the document
+	// so below after the data has been retrieved, missing fields need to be
+	// added with null values.
+	if (all_required.length > 0) {
+	    for (var r in all_required) projection[all_required[r]] = 1;
 	}
     }
     projection['_id'] = 0;
@@ -423,6 +438,13 @@ function queryRepertoires(req, res) {
 		.then(function(records) {
 		    //console.log(records);
 		    console.log('Retrieve ' + records.length + ' records.');
+
+		    // add any missing required fields
+		    if (all_required.length > 0) {
+			for (var i in records) {
+			    airr.addRequiredFields(records[i], all_required, global.airr['Repertoire']);
+			}
+		    }
 
 		    db.close();
 		    res.json({"Info":info,"Repertoire":records});
