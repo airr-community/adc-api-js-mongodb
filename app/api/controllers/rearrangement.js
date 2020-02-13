@@ -170,31 +170,31 @@ function constructQueryOperation(filter) {
 
     case '!=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$ne":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$ne":' + content_value + '}}';
 	}
 	return null;
 
     case '<':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$lt":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$lt":' + content_value + '}}';
 	}
 	return null;
 
     case '<=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$lte":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$lte":' + content_value + '}}';
 	}
 	return null;
 
     case '>':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$gt":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$gt":' + content_value + '}}';
 	}
 	return null;
 
     case '>=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
-	    return '{"' + content['field'] + '": { "$gte":"' + content_value + '"}}';
+	    return '{"' + content['field'] + '": { "$gte":' + content_value + '}}';
 	}
 	return null;
 
@@ -205,12 +205,14 @@ function constructQueryOperation(filter) {
 	return null;
 
     case 'is': // is missing
+    case 'is missing':
 	if (content['field'] != undefined) {
 	    return '{"' + content['field'] + '": { "$exists": false } }';
 	}
 	return null;
 
     case 'not': // is not missing
+    case 'is not missing':
 	if (content['field'] != undefined) {
 	    return '{"' + content['field'] + '": { "$exists": true } }';
 	}

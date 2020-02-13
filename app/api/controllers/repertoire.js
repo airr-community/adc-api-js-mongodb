@@ -187,12 +187,14 @@ function constructQueryOperation(filter) {
 	return null;
 
     case 'is': // is missing
+    case 'is missing':
     if (content['field'] != undefined) {
 	    return '{"' + content['field'] + '": { "$exists": false } }';
 	}
 	return null;
 
     case 'not': // is not missing
+    case 'is not missing':
 	if (content['field'] != undefined) {
 	    return '{"' + content['field'] + '": { "$exists": true } }';
 	}
