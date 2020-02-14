@@ -43,6 +43,10 @@ config.custom_file = process.env.CUSTOM_FILE;
 
 // Error/debug reporting
 config.debug = process.env.DEBUG_CONSOLE;
+if (config.debug == 'true') config.debug = true;
+else if (config.debug == 1) config.debug = true;
+else config.debug = false;
+
 config.slackURL = process.env.SLACK_WEBHOOK_URL;
 
 // get info

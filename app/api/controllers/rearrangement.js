@@ -89,7 +89,7 @@ function constructQueryOperation(filter) {
 	for (var i = 0; i < objs.length; ++i) {
 	    var p = objs[i];
 	    if (props.type == 'array') {
-		console.log(props.items);
+		if (config.debug) console.log(props.items);
 		if (props.items.type == 'object') {
 		    props = props.items.properties[p];
 		} else if (props.items['allOf'] != undefined) {
@@ -121,7 +121,7 @@ function constructQueryOperation(filter) {
     // if not in schema then maybe its a custom field
     // so use the same type as the value.
     if (!content_type) content_type = typeof content['value'];
-    console.log('type: ' + content_type);
+    if (config.debug) console.log('type: ' + content_type);
 
     // Check if query is required. By default, the ADC API will not allow
     // queries on the rearrangement endpoint for optional fields.
@@ -159,7 +159,7 @@ function constructQueryOperation(filter) {
 	    break;
 	}
     }
-    console.log('value: ' + content_value);
+    if (config.debug) console.log('value: ' + content_value);
 
     switch(filter['op']) {
     case '=':
@@ -270,7 +270,7 @@ function constructQueryOperation(filter) {
   Param 2: a handle to the response object
  */
 function getRearrangement(req, res) {
-    console.log('getRearrangement: ' + req.swagger.params['rearrangement_id'].value);
+    if (config.debug) console.log('getRearrangement: ' + req.swagger.params['rearrangement_id'].value);
 
     var result = {};
     var result_message = "Unknown error";
@@ -286,7 +286,7 @@ function getRearrangement(req, res) {
 
     MongoClient.connect(url, function(err, db) {
 	assert.equal(null, err);
-	console.log("Connected successfully to mongo");
+	if (config.debug) console.log("Connected successfully to mongo");
 
 	var v1airr = db.db(mongoSettings.dbname);
 	var collection = v1airr.collection('rearrangement');
@@ -309,13 +309,7 @@ function getRearrangement(req, res) {
 }
 
 function queryRearrangements(req, res) {
-    console.log('queryRearrangements');
-
-    req.swagger.operation.parameterObjects.forEach(function(parameter) {
-	console.log(parameter.name);
-	console.log(parameter.type);
-	console.log(req.swagger.params[parameter.name].value);
-    });
+    if (config.debug) console.log('queryRearrangements');
 
     var results = [];
     var result = {};
@@ -333,7 +327,7 @@ function queryRearrangements(req, res) {
     var projection = {};
     if (bodyData['fields'] != undefined) {
 	var fields = bodyData['fields'];
-	console.log('fields: ', fields);
+	if (config.debug) console.log('fields: ', fields);
 	if (! (fields instanceof Array)) {
 	    result_message = "fields parameter is not an array.";
 	    res.status(400).json({"message":result_message});
@@ -384,9 +378,9 @@ function queryRearrangements(req, res) {
     var query = undefined;
     if (bodyData['filters'] != undefined) {
 	filter = bodyData['filters'];
-	console.log(filter);
+	if (config.debug) console.log(filter);
 	query = constructQueryOperation(filter);
-	console.log(query);
+	if (config.debug) console.log(query);
 
 	if (!query) {
 	    result_message = "Could not construct valid query.";
@@ -414,7 +408,7 @@ function queryRearrangements(req, res) {
 		    _id: '$' + facets,
 		    count: { $sum: 1}
 		}});
-	console.log(agg);
+	if (config.debug) console.log(agg);
     }
 
     // construct info object for response
@@ -428,13 +422,13 @@ function queryRearrangements(req, res) {
     // Handle client HTTP request abort
     var abortQuery = false;
     req.on("close", function() {
-	console.log('Client request closed unexpectedly');
+	if (config.debug) console.log('Client request closed unexpectedly');
 	abortQuery = true;
     });
 
     MongoClient.connect(url, function(err, db) {
 	assert.equal(null, err);
-	console.log("Connected successfully to mongo");
+	if (config.debug) console.log("Connected successfully to mongo");
 
 	var v1airr = db.db(mongoSettings.dbname);
 	var collection = v1airr.collection('rearrangement');
@@ -444,7 +438,7 @@ function queryRearrangements(req, res) {
 	    collection.aggregate(agg).toArray()
 		.then(function(records) {
 		    //console.log(records);
-		    console.log('Retrieve ' + records.length + ' records.');
+		    if (config.debug) console.log('Retrieve ' + records.length + ' records.');
 		    
 		    for (var i in records) {
 			var entry = records[i];
@@ -503,7 +497,7 @@ function queryRearrangements(req, res) {
 
 		res.write(headers.join('\t'));
 		res.write('\n');
-		console.log(headers);
+		if (config.debug) console.log(headers);
 	    }
 
 	    var first = true;
@@ -514,7 +508,7 @@ function queryRearrangements(req, res) {
 	    var cursor = collection.find(query).skip(from).limit(size).project(projection);
 	    cursor.forEach(function(entry) {
 		if (abortQuery) {
-		    console.log('aborting query');
+		    if (config.debug) console.log('aborting query');
 		    cursor.close(function(err, result) {
 			// db will be closed by callback
 		    });
@@ -545,7 +539,7 @@ function queryRearrangements(req, res) {
 			var vals = [];
 			for (var i = 0; i < headers.length; ++i) {
 			    var p = headers[i];
-			    console.log(p, entry[p]);
+			    if (config.debug) console.log(p, entry[p]);
 			    if (!entry[p]) vals.push('');
 			    else vals.push(entry[p]);
 			}

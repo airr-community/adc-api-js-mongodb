@@ -88,7 +88,7 @@ function constructQueryOperation(filter) {
 	for (var i = 0; i < objs.length; ++i) {
 	    var p = objs[i];
 	    if (props.type == 'array') {
-		console.log(props.items);
+		if (config.debug) console.log(props.items);
 		if (props.items.type == 'object') {
 		    props = props.items.properties[p];
 		} else if (props.items['allOf'] != undefined) {
@@ -117,7 +117,7 @@ function constructQueryOperation(filter) {
     // if not in schema then maybe its a custom field
     // so use the same type as the value.
     if (!content_type) content_type = typeof content['value'];
-    console.log('type: ' + content_type);
+    if (config.debug) console.log('type: ' + content_type);
 
     var content_value = undefined;
     if (content['value'] != undefined) {
@@ -141,7 +141,7 @@ function constructQueryOperation(filter) {
 	    break;
 	}
     }
-    console.log('value: ' + content_value);
+    if (config.debug) console.log('value: ' + content_value);
 
     switch(filter['op']) {
     case '=':
@@ -252,7 +252,7 @@ function constructQueryOperation(filter) {
   Param 2: a handle to the response object
  */
 function getRepertoire(req, res) {
-    console.log('getRepertoire: ' + req.swagger.params['repertoire_id'].value);
+    if (config.debug) console.log('getRepertoire: ' + req.swagger.params['repertoire_id'].value);
 
     var result = {};
     var result_message = "Unknown error";
@@ -268,7 +268,7 @@ function getRepertoire(req, res) {
 
     MongoClient.connect(url, function(err, db) {
 	assert.equal(null, err);
-	console.log("Connected successfully to mongo");
+	if (config.debug) console.log("Connected successfully to mongo");
 
 	var v1airr = db.db(mongoSettings.dbname);
 	var collection = v1airr.collection('repertoire');
@@ -291,19 +291,12 @@ function getRepertoire(req, res) {
 }
 
 function queryRepertoires(req, res) {
-    console.log('queryRepertoires');
-
-    req.swagger.operation.parameterObjects.forEach(function(parameter) {
-	console.log(parameter.name);
-	console.log(parameter.type);
-	console.log(req.swagger.params[parameter.name].value);
-    });
+    if (config.debug) console.log('queryRepertoires');
 
     var results = [];
     var result = {};
     var result_flag = false;
     var result_message = "Unknown error";
-
 
     var bodyData = req.swagger.params['data'].value;
 
@@ -317,7 +310,7 @@ function queryRepertoires(req, res) {
     var projection = {};
     if (bodyData['fields'] != undefined) {
 	var fields = bodyData['fields'];
-	console.log('fields: ', fields);
+	if (config.debug) console.log('fields: ', fields);
 	if (! (fields instanceof Array)) {
 	    result_message = "fields parameter is not an array.";
 	    res.status(400).json({"message":result_message});
@@ -366,10 +359,10 @@ function queryRepertoires(req, res) {
     var query = undefined;
     if (bodyData['filters'] != undefined) {
 	filter = bodyData['filters'];
-	console.log(filter);
+	if (config.debug) console.log(filter);
 	try {
 	    query = constructQueryOperation(filter);
-	    console.log(query);
+	    if (config.debug) console.log(query);
 
 	    if (!query) {
 		result_message = "Could not construct valid query.";
@@ -395,7 +388,7 @@ function queryRepertoires(req, res) {
 		    _id: '$' + facets,
 		    count: { $sum: 1}
 		}});
-	console.log(agg);
+	if (config.debug) console.log(agg);
     }
 
     // construct info object for response
@@ -408,7 +401,7 @@ function queryRepertoires(req, res) {
 
     MongoClient.connect(url, function(err, db) {
 	assert.equal(null, err);
-	console.log("Connected successfully to mongo");
+	if (config.debug) console.log("Connected successfully to mongo");
 
 	var v1airr = db.db(mongoSettings.dbname);
 	var collection = v1airr.collection('repertoire');
@@ -418,7 +411,7 @@ function queryRepertoires(req, res) {
 	    collection.aggregate(agg).toArray()
 		.then(function(records) {
 		    //console.log(records);
-		    console.log('Retrieve ' + records.length + ' records.');
+		    if (config.debug) console.log('Retrieve ' + records.length + ' records.');
 
 		    for (var i in records) {
 			var entry = records[i];
@@ -442,7 +435,7 @@ function queryRepertoires(req, res) {
 	    collection.find(query).skip(from).limit(size).project(projection).toArray()
 		.then(function(records) {
 		    //console.log(records);
-		    console.log('Retrieve ' + records.length + ' records.');
+		    if (config.debug) console.log('Retrieve ' + records.length + ' records.');
 
 		    // add any missing required fields
 		    if (all_required.length > 0) {

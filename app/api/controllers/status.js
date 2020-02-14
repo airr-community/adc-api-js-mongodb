@@ -56,6 +56,8 @@ module.exports = {
 };
 
 function getStatus(req, res) {
+    if (config.debug) console.log('getStatus');
+
     // check connection to database
     MongoClient.connect(url, function(err, db) {
 	if (err) {
@@ -67,6 +69,8 @@ function getStatus(req, res) {
 }
 
 function getInfo(req, res) {
+    if (config.debug) console.log('getInfo');
+
     // check connection to database
     MongoClient.connect(url, function(err, db) {
 	if (err) {
