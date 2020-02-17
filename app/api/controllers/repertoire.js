@@ -258,6 +258,10 @@ function getRepertoire(req, res) {
     var result_message = "Unknown error";
     var results = [];
 
+    // AIRR required fields
+    var all_required = [];
+    airr.collectRequiredFields(global.airr['Repertoire'], all_required, null);
+
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
@@ -277,7 +281,9 @@ function getRepertoire(req, res) {
 	    .then(function(record) {
 		db.close();
 		if (record) {
+		    // by default include all AIRR required fields
 		    if (record['_id']) delete record['_id'];
+		    airr.addRequiredFields(record, all_required, global.airr['Repertoire']);
 		    res.json({"Info":info,"Repertoire":[record]});
 		} else
 		    res.json({"Info":info,"Repertoire":[]});

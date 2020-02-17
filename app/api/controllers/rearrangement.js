@@ -276,6 +276,10 @@ function getRearrangement(req, res) {
     var result_message = "Unknown error";
     var results = [];
 
+    // AIRR required fields
+    var all_required = [];
+    airr.collectRequiredFields(global.airr['Rearrangement'], all_required, null);
+
     // construct info object for response
     var info = { };
     var schema = global.airr['Info'];
@@ -295,7 +299,9 @@ function getRearrangement(req, res) {
 	    .then(function(record) {
 		db.close();
 		if (record) {
+		    // by default include all AIRR required fields
 		    if (record['_id']) delete record['_id'];
+		    airr.addRequiredFields(record, all_required, global.airr['Rearrangement']);
 		    res.json({"Info":info,"Rearrangement":[record]});
 		} else
 		    res.json({"Info":info,"Rearrangement":[]});
