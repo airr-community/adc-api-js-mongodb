@@ -385,23 +385,23 @@ function queryRearrangements(req, res) {
     if (bodyData['filters'] != undefined) {
 	filter = bodyData['filters'];
 	if (config.debug) console.log(filter);
-	query = constructQueryOperation(filter);
-	if (config.debug) console.log(query);
+	try {
+	    query = constructQueryOperation(filter);
+	    if (config.debug) console.log(query);
 
-	if (!query) {
-	    result_message = "Could not construct valid query.";
-	    res.status(400).json({"message":result_message});
-	    return;
+	    if (!query) {
+		result_message = "Could not construct valid query.";
+		res.status(400).json({"message":result_message});
+		return;
+	    }
+
+	    // turn query string into JSON for mongo
+            query = JSON.parse(query);
+	} catch (e) {
+            result_message = "Could not construct valid query: " + e;
+            res.status(400).json({"message":result_message});
+            return;
 	}
-
-    // turn query string into JSON for mongo
-    try {
-        query = JSON.parse(query);
-    } catch (e) {
-        result_message = "Could not construct valid query: " + e;
-        res.status(400).json({"message":result_message});
-        return;
-    }
     }
 
     // facets parameter
