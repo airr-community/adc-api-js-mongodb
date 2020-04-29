@@ -4,8 +4,9 @@
   "private": true,
   "description": "AIRR Data Commons API reference implementation",
   "keywords": [],
-  "author": "",
-  "license": "GNU AGPL",
+  "author": "AIRR Community",
+  "license": "GNU AGPL V3",
+  "homepage": "https://github.com/airr-community/adc-api",
   "main": "app.js",
   "dependencies": {
     "q": "1.1.2",
