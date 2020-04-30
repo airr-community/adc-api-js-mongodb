@@ -271,7 +271,7 @@ function constructQueryOperation(filter) {
   Param 2: a handle to the response object
  */
 function getRearrangement(req, res) {
-    if (config.debug) console.log('getRearrangement: ' + req.swagger.params['rearrangement_id'].value);
+    if (config.debug) console.log('getRearrangement: ' + req.swagger.params['sequence_id'].value);
 
     var result = {};
     var result_message = "Unknown error";
@@ -296,7 +296,7 @@ function getRearrangement(req, res) {
 	var v1airr = db.db(mongoSettings.dbname);
 	var collection = v1airr.collection('rearrangement');
 
-	collection.findOne({ rearrangement_id: req.swagger.params['rearrangement_id'].value })
+	collection.findOne({ sequence_id: req.swagger.params['sequence_id'].value })
 	    .then(function(record) {
 		db.close();
 		if (record) {
