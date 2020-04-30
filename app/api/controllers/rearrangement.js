@@ -199,6 +199,7 @@ function constructQueryOperation(filter) {
 	return null;
 
     case 'contains':
+        if (content_type != 'string') return null;
 	if ((content['field'] != undefined) && (content_value != undefined)) {
 	    return '{"' + content['field'] + '": { "$regex":' + content_value + ', "$options": "i"}}';
 	}
