@@ -259,9 +259,9 @@ function getRepertoire(req, res) {
     var result_message = "Unknown error";
     var results = [];
 
-    // AIRR required fields
-    var all_required = [];
-    airr.collectRequiredFields(global.airr['Repertoire'], all_required, null);
+    // all AIRR fields
+    var all_fields = [];
+    airr.collectFields(global.airr['Repertoire'], 'airr-schema', all_fields, null);
 
     // construct info object for response
     var info = { };
@@ -282,9 +282,10 @@ function getRepertoire(req, res) {
 	    .then(function(record) {
 		db.close();
 		if (record) {
+                    if (config.debug) console.log("Query returned record.");
 		    // by default include all AIRR required fields
 		    if (record['_id']) delete record['_id'];
-		    airr.addRequiredFields(record, all_required, global.airr['Repertoire']);
+		    airr.addFields(record, all_fields, global.airr['Repertoire']);
 		    res.json({"Info":info,"Repertoire":[record]});
 		} else
 		    res.json({"Info":info,"Repertoire":[]});
@@ -307,10 +308,10 @@ function queryRepertoires(req, res) {
 
     var bodyData = req.swagger.params['data'].value;
 
-    // AIRR required fields
-    var all_required = [];
-    if (bodyData['include_required']) {
-	airr.collectRequiredFields(global.airr['Repertoire'], all_required, null);
+    // AIRR fields
+    var all_fields = [];
+    if (bodyData['include_fields']) {
+	airr.collectFields(global.airr['Repertoire'], bodyData['include_fields'], all_fields, null);
     }
 
     // field projection
@@ -332,9 +333,15 @@ function queryRepertoires(req, res) {
 	// NOTE: projection will not add a field if it is not already in the document
 	// so below after the data has been retrieved, missing fields need to be
 	// added with null values.
-	if (all_required.length > 0) {
-	    for (var r in all_required) projection[all_required[r]] = 1;
+	if (all_fields.length > 0) {
+	    for (var r in all_fields) projection[all_fields[r]] = 1;
 	}
+
+        // add to field list so will be put in response if necessary
+	for (var i = 0; i < fields.length; ++i) {
+	    if (fields[i] == '_id') continue;
+            all_fields.push(fields[i]);
+        }
     }
     projection['_id'] = 0;
 
@@ -445,9 +452,9 @@ function queryRepertoires(req, res) {
 		    if (config.debug) console.log('Retrieve ' + records.length + ' records.');
 
 		    // add any missing required fields
-		    if (all_required.length > 0) {
+		    if (all_fields.length > 0) {
 			for (var i in records) {
-			    airr.addRequiredFields(records[i], all_required, global.airr['Repertoire']);
+			    airr.addFields(records[i], all_fields, global.airr['Repertoire']);
 			}
 		    }
 

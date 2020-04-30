@@ -66,56 +66,97 @@ airr.schema = function() {
     return $RefParser.dereference(doc);
 }
 
-// Recursively walk through schema and collect all the required fields.
+// Given a field, check if included in field set
+// Field sets include:
+// miairr, for only MiAIRR fields
+// airr-core, for all required and identifier fields
+// airr-schema, for all fields
+airr.checkSet = function(schema, field_set, f) {
+    switch (field_set) {
+    case 'miairr':
+        if ((schema['properties'][f]['x-airr']) && (schema['properties'][f]['x-airr']['miairr']))
+	    return true;
+        break;
+    case 'airr-core':
+        // miairr
+        if ((schema['properties'][f]['x-airr']) && (schema['properties'][f]['x-airr']['miairr']))
+	    return true;
+        // identifer
+        if ((schema['properties'][f]['x-airr']) && (schema['properties'][f]['x-airr']['identifier']))
+            return true;
+        // required
+        if ((schema['required']) && (schema['required'].indexOf(f) >= 0))
+            return true;
+        break;
+    case 'airr-schema':
+        // all fields
+        return true;
+        break;
+    }
+    return false;
+}
+
+// Recursively walk through schema and collect fields based upon field set.
 // The schema loader resolves the $ref references so we do not need to follow them.
-airr.collectRequiredFields = function(schema, required_list, context) {
+airr.collectFields = function(schema, field_set, field_list, context) {
     for (var f in schema['properties']) {
 	var full_field = f;
 	if (context) full_field = context + '.' + f;
 	//console.log(full_field);
 	//console.log(schema['properties'][f]);
 
-	if (schema['properties'][f]['x-airr']) {
-	    // standard required field
-	    if (schema['properties'][f]['x-airr']['required'])
-		required_list.push(full_field);
-	} else if (schema['properties'][f]['type'] == 'object') {
+        // check if deprecated
+        if ((schema['properties'][f]['x-airr']) && (schema['properties'][f]['x-airr']['deprecated']))
+            continue;
+
+        var field_type = schema['properties'][f]['type'];
+        switch (field_type) {
+        case 'object':
 	    // sub-object
-	    airr.collectRequiredFields(schema['properties'][f], required_list, full_field);
-	} else if (schema['properties'][f]['type'] == 'array') {
-	    if (schema['properties'][f]['items']['x-airr']) {
-		// array of standard required fields
-		if (schema['properties'][f]['items']['x-airr']['required'])
-		    required_list.push(full_field);
-	    } else if (schema['properties'][f]['items']['type'] == 'object') {
+	    airr.collectFields(schema['properties'][f], field_set, field_list, full_field);
+            break;
+        case 'array':
+	    if (schema['properties'][f]['items']['type'] == 'object') {
 		// array of sub-objects
-		airr.collectRequiredFields(schema['properties'][f]['items'], required_list, full_field);
-	    } else if (schema['properties'][f]['items']['allOf']) {
+		airr.collectFields(schema['properties'][f]['items'], field_set, field_list, full_field);
+            } else if (schema['properties'][f]['items']['allOf']) {
 		// array of composite objects
 		for (var s in schema['properties'][f]['items']['allOf']) {
-		    airr.collectRequiredFields(schema['properties'][f]['items']['allOf'][s], required_list, full_field);
+		    airr.collectFields(schema['properties'][f]['items']['allOf'][s], field_set, field_list, full_field);
 		}
-	    } else {
-		// unhandled schema structure
-		console.error('Unhandled schema array structure: ' + full_field);
-	    }
-	} else if (schema['properties'][f]['type']) {
-	    // it has a type but is not required so ignore
-	} else {
+            } else {
+                // array of primitive types
+                if (airr.checkSet(schema, field_set, f))
+                    field_list.push(full_field);
+            }
+            break;
+        case 'string':
+        case 'number':
+        case 'integer':
+        case 'boolean':
+            // primitive types
+            if (airr.checkSet(schema, field_set, f))
+                field_list.push(full_field);
+            break;
+        default:
 	    // unhandled schema structure
 	    console.error('Unhandled schema structure: ' + full_field);
+            break;
 	}
     }
 }
 
-// Add the required fields to the document if any are missing
-airr.addRequiredFields = function(document, required_list, schema) {
-    for (var r in required_list) {
-	var path = required_list[r].split('.');
+// Add the fields to the document if any are missing
+airr.addFields = function(document, field_list, schema) {
+    for (var r in field_list) {
+	var path = field_list[r].split('.');
 	var obj = document;
 	var spec = schema;
 	for (var p = 0; p < path.length; p++) {
 	    spec = spec['properties'][path[p]];
+            // if not in the spec then give up
+            if (!spec) break;
+
 	    if (spec['type'] == 'array') {
 		if ((spec['items']['type'] == undefined) || (spec['items']['type'] == 'object')) {
 		    // array of object
@@ -132,7 +173,7 @@ airr.addRequiredFields = function(document, required_list, schema) {
 			}
 		    }
 		    for (var a in obj[path[p]]) {
-			airr.addRequiredFields(obj[path[p]][a], [ path.slice(p+1).join('.') ], sub_spec);
+			airr.addFields(obj[path[p]][a], [ path.slice(p+1).join('.') ], sub_spec);
 		    }
 		} else {
 		    // array of primitive data types
@@ -147,7 +188,7 @@ airr.addRequiredFields = function(document, required_list, schema) {
 		obj = obj[path[p]];
 	    } else if (obj[path[p]] != undefined) obj = obj[path[p]];
 	    else if (p == path.length - 1) obj[path[p]] = null;
-	    else console.error('Internal error (addRequiredFields) do not know how to handle path element: ' + p);
+	    else console.error('Internal error (addFields) do not know how to handle path element: ' + p);
 	}
     }
 }
