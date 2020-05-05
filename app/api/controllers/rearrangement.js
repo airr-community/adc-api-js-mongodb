@@ -123,44 +123,65 @@ function constructQueryOperation(filter) {
     if (!content_type) content_type = typeof content['value'];
     if (config.debug) console.log('type: ' + content_type);
 
-    // Check if query is required. By default, the ADC API will not allow
+    // Check if query field is required. By default, the ADC API can reject
     // queries on the rearrangement endpoint for optional fields.
     if (content_properties != undefined) {
-	if (content_properties['x-airr'] != undefined) {
-	    if (content_properties['x-airr']['adc-api-optional'] != undefined) {
-		if (content_properties['x-airr']['adc-api-optional']) {
-		    // optional field, reject
-		    console.error(content['field'] + ' is an optional query field.');
-		    return null;
-		}
-	    }
-	}
+        if (content_properties['x-airr'] != undefined) {
+            if ((content_properties['x-airr']['adc-query-support'] != undefined) &&
+                (content_properties['x-airr']['adc-query-support'])) {
+                // need to support query
+            } else {
+                // optional field, reject
+                if (config.debug) console.log('VDJ-ADC-API INFO: ' + content['field'] + ' is an optional query field.');
+                error['message'] = "query not supported on field: " + content['field'];
+                return null;
+            }
+        }
     }
 
+    // verify the value type against the field type
+    // stringify the value properly for the query
     var content_value = undefined;
     if (content['value'] != undefined) {
-	switch(content_type) {
-	case 'integer':
-	case 'number':
-	case 'boolean':
-	    if (content['value'] instanceof Array) {
-		content_value = JSON.stringify(content['value']);
-	    } else {
-		content_value = content['value'];
-	    }
-	    break;
-	case 'string':
-	default:
-	    if (content['value'] instanceof Array) {
-		content_value = JSON.stringify(content['value']);
-	    } else {
-		content_value = '"' + content['value'] + '"';
-	    }
-	    break;
-	}
+        if (content['value'] instanceof Array) {
+            // we do not bother checking the types of array elements
+            content_value = JSON.stringify(content['value']);
+        } else {
+            // if the field is an array
+            // then check if items are basic type
+            if (content_type == 'array') {
+                if (content_properties && content_properties['items'] && content_properties['items']['type'])
+                    content_type = content_properties['items']['type'];
+            }
+
+            switch(content_type) {
+            case 'integer':
+            case 'number':
+                if (((typeof content['value']) != 'integer') && ((typeof content['value']) != 'number')) {
+                    return null;
+                }
+                content_value = content['value'];
+                break;
+            case 'boolean':
+                if ((typeof content['value']) != 'boolean') {
+                    return null;
+                }
+                content_value = content['value'];
+                break;
+            case 'string':
+                if ((typeof content['value']) != 'string') {
+                    return null;
+                }
+                content_value = '"' + content['value'] + '"';
+                break;
+            default:
+                return null;
+            }
+        }
     }
     if (config.debug) console.log('value: ' + content_value);
 
+    // query operators
     switch(filter['op']) {
     case '=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
@@ -376,11 +397,21 @@ function queryRearrangements(req, res) {
     var from = 0;
     if (bodyData['from'] != undefined)
 	from = bodyData['from'];
+    if (from < 0) {
+	result_message = "Invalid from parameter.";
+	res.status(400).json({"message":result_message});
+	return;
+    }
 
     // size parameter
     var size = config.max_size;
     if (bodyData['size'] != undefined)
 	size = bodyData['size'];
+    if (size < 0) {
+	result_message = "Invalid size parameter.";
+	res.status(400).json({"message":result_message});
+	return;
+    }
     if (size > config.max_size) {
 	result_message = "Size (" + size + ") exceeds maximum size (" + config.max_size + ").";
 	res.status(400).json({"message":result_message});

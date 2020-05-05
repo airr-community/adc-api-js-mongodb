@@ -79,6 +79,7 @@ function constructQueryOperation(filter) {
 
     // determine type from schema
     var content_type = null;
+    var content_properties = null;
     if (content['field'] != undefined) {
 	var schema = global.airr['Repertoire'];
 	var props = schema;
@@ -109,7 +110,10 @@ function constructQueryOperation(filter) {
 	}
 
 	if (props != undefined) {
-	    if (props['type'] != undefined) content_type = props['type'];
+            if (props['type'] != undefined) {
+                content_type = props['type'];
+                content_properties = props;
+            }
 	} else {
 	    console.error(content['field'] + ' is not found in AIRR schema.');
 	}
@@ -119,30 +123,49 @@ function constructQueryOperation(filter) {
     if (!content_type) content_type = typeof content['value'];
     if (config.debug) console.log('type: ' + content_type);
 
+    // verify the value type against the field type
+    // stringify the value properly for the query
     var content_value = undefined;
     if (content['value'] != undefined) {
-	switch(content_type) {
-	case 'integer':
-	case 'number':
-	case 'boolean':
-	    if (content['value'] instanceof Array) {
-		content_value = JSON.stringify(content['value']);
-	    } else {
-		content_value = content['value'];
-	    }
-	    break;
-	case 'string':
-	default:
-	    if (content['value'] instanceof Array) {
-		content_value = JSON.stringify(content['value']);
-	    } else {
-		content_value = '"' + content['value'] + '"';
-	    }
-	    break;
-	}
+        if (content['value'] instanceof Array) {
+            // we do not bother checking the types of array elements
+            content_value = JSON.stringify(content['value']);
+        } else {
+            // if the field is an array
+            // then check if items are basic type
+            if (content_type == 'array') {
+                if (content_properties && content_properties['items'] && content_properties['items']['type'])
+                    content_type = content_properties['items']['type'];
+            }
+
+            switch(content_type) {
+            case 'integer':
+            case 'number':
+                if (((typeof content['value']) != 'integer') && ((typeof content['value']) != 'number')) {
+                    return null;
+                }
+                content_value = content['value'];
+                break;
+            case 'boolean':
+                if ((typeof content['value']) != 'boolean') {
+                    return null;
+                }
+                content_value = content['value'];
+                break;
+            case 'string':
+                if ((typeof content['value']) != 'string') {
+                    return null;
+                }
+                content_value = '"' + content['value'] + '"';
+                break;
+            default:
+                return null;
+            }
+        }
     }
     if (config.debug) console.log('value: ' + content_value);
 
+    // query operators
     switch(filter['op']) {
     case '=':
 	if ((content['field'] != undefined) && (content_value != undefined)) {
