@@ -98,7 +98,7 @@ airr.checkSet = function(schema, field_set, f) {
 
 // Recursively walk through schema and collect fields based upon field set.
 // The schema loader resolves the $ref references so we do not need to follow them.
-airr.collectFields = function(schema, field_set, field_list, context) {
+airr.collectFields = function(schema, field_set, field_list, context, force) {
     for (var f in schema['properties']) {
 	var full_field = f;
 	if (context) full_field = context + '.' + f;
@@ -113,16 +113,21 @@ airr.collectFields = function(schema, field_set, field_list, context) {
         switch (field_type) {
         case 'object':
 	    // sub-object
-	    airr.collectFields(schema['properties'][f], field_set, field_list, full_field);
+            if ((schema['properties'][f]['x-airr']) && (schema['properties'][f]['x-airr']['ontology'])) {
+                // if it is an ontology object, check the object then force the ontology fields if necessary
+                if (airr.checkSet(schema, field_set, f))
+	            airr.collectFields(schema['properties'][f], field_set, field_list, full_field, true);
+            } else
+	        airr.collectFields(schema['properties'][f], field_set, field_list, full_field, force);
             break;
         case 'array':
 	    if (schema['properties'][f]['items']['type'] == 'object') {
 		// array of sub-objects
-		airr.collectFields(schema['properties'][f]['items'], field_set, field_list, full_field);
+		airr.collectFields(schema['properties'][f]['items'], field_set, field_list, full_field, force);
             } else if (schema['properties'][f]['items']['allOf']) {
 		// array of composite objects
 		for (var s in schema['properties'][f]['items']['allOf']) {
-		    airr.collectFields(schema['properties'][f]['items']['allOf'][s], field_set, field_list, full_field);
+		    airr.collectFields(schema['properties'][f]['items']['allOf'][s], field_set, field_list, full_field, force);
 		}
             } else {
                 // array of primitive types
@@ -135,7 +140,9 @@ airr.collectFields = function(schema, field_set, field_list, context) {
         case 'integer':
         case 'boolean':
             // primitive types
-            if (airr.checkSet(schema, field_set, f))
+            if (force)
+                field_list.push(full_field);
+            else if (airr.checkSet(schema, field_set, f))
                 field_list.push(full_field);
             break;
         default:
@@ -148,6 +155,7 @@ airr.collectFields = function(schema, field_set, field_list, context) {
 
 // Add the fields to the document if any are missing
 airr.addFields = function(document, field_list, schema) {
+    //console.log(field_list);
     for (var r in field_list) {
 	var path = field_list[r].split('.');
 	var obj = document;
@@ -156,6 +164,7 @@ airr.addFields = function(document, field_list, schema) {
 	    spec = spec['properties'][path[p]];
             // if not in the spec then give up
             if (!spec) break;
+            //console.log(path[p]);
 
 	    if (spec['type'] == 'array') {
 		if ((spec['items']['type'] == undefined) || (spec['items']['type'] == 'object')) {
